@@ -1,0 +1,95 @@
+"Social and environmental impact are at the top of the business agenda"
+
+"we champion fairness, make the complex simple and forge connections between clients to find creative solutions"
+
+"we’re focusing on well-being and individuality so that all our people can thrive"
+
+PROFESSIONAL AMBITIOUS COMPANY
+
+
+
+Priorities:
+Inclusive
+"We’re committed to building an equal, diverse and inclusive culture where everyone’s voice and individual experience is welcomed"
+"We mentor via a range of schemes, including the Law Society’s ‘Diversity Access Scheme’"
+
+Ambitious
+"Fast-tracking high performers, enabling our people to work where they choose and mapping strong development plans underpin our collective success"
+
+Collaborative
+"Teamwork is in our DNA, recently demonstrated in our #BeJoined campaign. Read more about our recent work across the public and private sector."
+
+Pragmatic
+"We deliver this by being up-front with one another and our clients, offering practical solutions and clear advice"
+
+Fair
+"We treat everyone as individuals and tailor their development plans, offering equal opportunities throughout the firm."
+
+
+
+Technical Proficiency:
+Programming Languages: Proficiency in languages relevant to the project (e.g., Python, Java, C#, etc.).
+Web Development: Skills in building and maintaining web applications (HTML, CSS, JavaScript, frameworks like React or Angular).
+Database Management: Knowledge of database systems (e.g., SQL) for handling legal data and information.
+
+Legal Understanding:
+A basic understanding of legal terminology and processes to facilitate effective collaboration with legal professionals.
+
+Data Analysis and Management:
+Data Analytics: Ability to analyze legal data for insights and trends.
+Database Design: Skills in designing databases to efficiently store and retrieve legal information.
+
+Cybersecurity Awareness:
+Understanding of cybersecurity principles to ensure the protection of sensitive legal information.
+
+Legal Tech Knowledge:
+Familiarity with legal technologies and tools used in the legal industry, such as document management systems, legal research platforms, or case management software.
+
+Machine Learning and AI:
+Knowledge of machine learning algorithms and artificial intelligence for applications in legal analytics, contract review, or predictive legal outcomes.
+
+User Interface (UI) and User Experience (UX) Design:
+Design skills to create user-friendly interfaces for legal professionals using applications or tools developed by your team.
+
+Communication Skills:
+Effective communication skills to understand and articulate technical concepts to non-technical stakeholders in the law firm.
+
+Problem-Solving Skills:
+Ability to identify challenges within legal processes and propose innovative technical solutions.
+
+Project Management:
+Basic project management skills to plan and execute the development of the project within specified timelines.
+
+Adaptability:
+Ability to adapt to the unique requirements and constraints of the legal industry.
+
+Ethical Considerations:
+Awareness of ethical considerations related to handling legal information and ensuring compliance with data protection laws.
+
+Team Collaboration:
+Collaboration skills to work effectively in a team, potentially with legal professionals who may not have a technical background.
+
+Continuous Learning:
+Willingness and enthusiasm for continuous learning, especially in a rapidly evolving field like legal technology.
+
+Attention to Detail:
+Attention to detail is crucial, especially when dealing with legal documents and information.
+
+
+
+Motivation and interest in the project (why the team is interested, their skills, why this applies to the sponsor)
+
+Understanding the brief, making judgement on what actually needs to happen and understanding why the sponsor wants this project to be done. Look at other existing projects with their competitors.
+
+Application of methods/tools that will be used to tackle the problem. Discuss initial approach to identified challenges/skill gaps/back up plans
+
+Why we can organize the project (team skills, time-scale of project) problems that could arise from project management (challenges/skill gaps/back up plans)
+
+STRUCTURE
+
+(In short:)
+(This is why we are interested because of x skill, y interests, z company)
+(This is what the brief is asking, this is the issues we will face because of x skill gaps, y project issues, this is what we will do using x, y, z method(s) and our x interest, y skills, to complete the companies vision for the project)
+(this is how we will organise ourselves for the project as a team by fixing x problems with x solutions)
+
+c
