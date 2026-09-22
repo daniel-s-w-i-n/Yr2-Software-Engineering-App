@@ -1,0 +1,397 @@
+#include <stdio.h>
+#include "/lhome/psyds13/psyds13_coursework/source/coursework.c"
+#include "/lhome/psyds13/psyds13_coursework/source/linkedlist.c"
+#include <pthread.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <semaphore.h>
+
+
+void * processGen();
+void * processSim();
+void * processTerm();
+void * boosterDae();
+void * boosterIOt();
+void pidPoolCreate();
+void returnPID(int);
+int getPID();
+int countSize(LinkedList);
+
+int numOfProcesses = NUMBER_OF_PROCESSES;  //global variables so that it can be accessed by any thread
+int boostDelay = BOOST_INTERVAL;
+int ioDelay = IO_DAEMON_INTERVAL;
+int numOfDev = NUMBER_OF_IO_DEVICES;
+int maxNumOfProc = MAX_CONCURRENT_PROCESSES;
+int numOfPriorityLevels = NUMBER_OF_PRIORITY_LEVELS;
+Process * pidTable[SIZE_OF_PROCESS_TABLE];
+Process * processTable[NUMBER_OF_PROCESSES];
+Process * termTable[NUMBER_OF_PROCESSES];
+bool pidPool[SIZE_OF_PROCESS_TABLE];
+int rPaused = 0; //to see if the first process is paused
+int tPaused = 1; //to see if the first process is paused
+int sPaused = 1;
+int tSize = 0;
+int rSize = 0;
+int gDone = 0;
+int i = 0;
+int p = 0;
+LinkedList priorityQueues[NUMBER_OF_PRIORITY_LEVELS];
+LinkedList IOQueues[NUMBER_OF_IO_DEVICES];
+LinkedList rList = LINKED_LIST_INITIALIZER ;
+LinkedList tList = LINKED_LIST_INITIALIZER ;
+
+pthread_mutex_t poolMutex;
+pthread_mutex_t queueMutex;
+pthread_mutex_t IOMutex;
+
+sem_t NotUsed;
+
+pthread_t processGenerator;
+pthread_t processSimulator;
+pthread_t processTerminator;
+pthread_t boosterDaemon;
+pthread_t boosterIO;
+
+
+int main(){
+
+    void * status;
+    pthread_create((&processGenerator),NULL,processGen,NULL);
+    pthread_create((&processSimulator),NULL,processSim,NULL);
+    pthread_create((&boosterDaemon),NULL,boosterDae,NULL);
+    pthread_create((&boosterIO),NULL,boosterIOt,NULL);
+    pthread_create((&processTerminator),NULL,processTerm,NULL);
+    pidPoolCreate();
+
+    pthread_join(processSimulator, &status); 
+    pthread_join(processGenerator, &status); 
+    pthread_join(processTerminator, &status); 
+    pthread_join(boosterDaemon, &status); 
+    pthread_join(boosterIO, &status); 
+    pthread_exit(NULL);
+    return 0;
+}
+
+void pidPoolCreate(){
+    for (int k = 0;k < MAX_CONCURRENT_PROCESSES;k++){
+        pidPool[k] = false;    
+    }
+}
+
+int getPID(){
+    for (int k = 0;k < MAX_CONCURRENT_PROCESSES;k++){
+        if (pidPool[k] == false){
+            pidPool[k] = true; //being used
+            return k;
+        }
+    }
+    return -1;
+}
+
+void returnPID(int num){
+    pidPool[num] = false;
+}
+
+int countSize(LinkedList list){
+    Element * b = getHead(list);
+    int count = 0;
+    while(b != NULL){
+        count ++;
+        b = getNext(b);
+    }
+    return count;
+}
+
+void * boosterIOt(void * threadForProcess){
+    Process * process;
+    while(tPaused != 5){
+        if (sPaused == 0){
+            usleep(ioDelay);
+            int amountInQueue = 0;
+    //get the processes from the device queue
+            pthread_mutex_lock(&IOMutex);
+            for (int i = 0; i<numOfDev ; i++){
+                amountInQueue = countSize((IOQueues[i]));
+                if (amountInQueue > 0){
+                    process = removeFirst(&(IOQueues[i]));
+                     //put the process in the queue
+                     printf("I/O DAEMON - UNBLOCKED: [PID = %d, Priority = %d]\n",process->iPID,process->iPriority);
+                    pthread_mutex_lock(&queueMutex);
+                    addFirst(process, &(priorityQueues[process->iPriority])); //leak here
+                    pthread_mutex_unlock(&queueMutex);
+                }
+            }
+            pthread_mutex_unlock(&IOMutex);
+    
+    }}
+    printf("I/O DAEMON: Finished\n");
+    return threadForProcess;
+}
+
+void * boosterDae(void * threadForProcess){
+    int amountInQueue;
+    void * data;
+    Process * process;
+    while(tPaused != 5)
+    {
+        if (sPaused == 0){
+        usleep(boostDelay);
+        amountInQueue = 0;
+        for (int l = 0 ; l < numOfPriorityLevels/2; l++){
+            pthread_mutex_lock(&queueMutex);
+            amountInQueue = countSize((priorityQueues[numOfPriorityLevels-l-1]));
+            pthread_mutex_unlock(&queueMutex);
+            if(amountInQueue > 0){
+                pthread_mutex_lock(&queueMutex);
+                data = removeFirst(&(priorityQueues[numOfPriorityLevels-l-1]));
+                pthread_mutex_unlock(&queueMutex);
+                process = data;
+                printf("QUEUE - REMOVED: [Queue = READY %d, Size = %d, PID = %d, Priority = %d]\n"
+                ,process->iPID,amountInQueue,process->iPID,process->iPID);
+                printf("BOOSTER DAEMON: [PID = %d, Priority = %d, InitialBurstTime = %d, RemainingBurstTime = %d] => Boosted to Level 8\n"
+                ,process->iPID,process->iPriority,process->iBurstTime,process->iRemainingBurstTime);
+                printf("QUEUE - ADDED: [Queue = READY 8, Size = %d, PID = %d, Priority = %d]\n"
+                ,amountInQueue,process->iPID,process->iPID);
+                pthread_mutex_lock(&queueMutex);
+                addFirst(process, &(priorityQueues[7])); //leak here
+                pthread_mutex_unlock(&queueMutex);
+            }
+        
+        }
+        }
+    }
+    printf("BOOSTER DAEMON: Finished\n");
+    return threadForProcess;
+}
+
+
+void * processGen(void * threadForProcess){
+    printf("BOOSTER DAEMON: Created\n");
+    do{
+        int queueSize = 0;
+        if (rPaused == 0){
+        Process * process;
+            if (maxNumOfProc >> 0){
+                maxNumOfProc --;
+                pthread_mutex_lock(&poolMutex);
+                i = getPID();
+                pthread_mutex_unlock(&poolMutex);
+                if (i==-1){
+                    rPaused = 1;
+                }
+                else{
+
+                    process = generateProcess(i);
+                    pthread_mutex_lock(&poolMutex);
+                    pidTable[i] = process;
+                    processTable[p] = process;
+                    p++;
+                    pthread_mutex_unlock(&poolMutex);
+                    printf("%d\n\n", i);
+                }
+                numOfProcesses --;
+	            printf("GENERATOR - CREATED: [PID = %d, Priority = %d, InitialBurstTime = %d, RemainingBurstTime = %d]\n"\
+    	        ,process->iPID,process->iPriority,process->iBurstTime,process->iRemainingBurstTime);		//prints out details
+                if(process->iState !=1)
+                {
+                    
+                        printf("invalid Process\n\n");
+                        //destroyProcess(process);
+                        maxNumOfProc ++;
+                    
+                }
+                else{
+
+                    pthread_mutex_lock(&queueMutex);
+                    addLast(process, &(priorityQueues[process->iPriority]));
+                    pthread_mutex_unlock(&queueMutex);
+
+                    queueSize = countSize((priorityQueues[process->iPriority]));
+
+                    //process = pidTable[i];
+                    printf("GENERATOR - ADDED TO TABLE: [PID = %d, Priority = %d, Initial BurstTime = %d, Remaining BurstTime = %d]\n"\
+                    ,process->iPID,process->iPriority,process->iBurstTime,process->iRemainingBurstTime);
+                
+
+                
+                    printf("QUEUE - ADDED: [Queue = READY %d, Size = %d, PID = %d, Priority = %d]\n",process->iPriority,queueSize,process->iPID,process->iPriority);
+                    printf("GENERATOR - ADMITTED: [PID = %d, Priority = %d, InitialBurstTime = %d, RemainingBurstTime = %d]\n"\
+                    ,process->iPID,process->iPriority,process->iBurstTime,process->iRemainingBurstTime);
+
+
+                
+                    rSize++;
+                }
+            }
+            else 
+            {   
+                rPaused = 1;
+                sPaused = 0;
+            }
+
+        }
+    
+    
+    }while (numOfProcesses >> 0);
+    printf("GENERATOR FINISHED\n");
+    gDone = 3;
+    return threadForProcess;
+}
+
+
+
+
+void * processSim(void * threadForProcess){
+    
+    Process * process;
+    void * data = "";
+    int queueSize;
+    int queueUsed = 0;
+
+    do{
+    if (sPaused == 0){
+        data = NULL;
+        pthread_mutex_lock(&queueMutex);
+        for(int l = 0 ;l<numOfPriorityLevels ; l++){
+            data = removeFirst(&(priorityQueues[l]));
+            if (data != NULL){
+                queueUsed = l;
+                break;
+            }
+        }
+        pthread_mutex_unlock(&queueMutex);
+        if (data == NULL){
+            sPaused = 1;
+            rPaused = 0;
+            tPaused = 0;
+        }
+        else{  
+            process = data; //gets the data from the element
+            rSize --;
+            queueSize = countSize((priorityQueues[process->iPriority]));
+            printf("QUEUE - REMOVED: [Queue = READY %d, Size = %d, PID = %d, Priority = %d]\n",process->iPriority,queueSize,process->iPID,process->iPriority);
+            if(process->iPriority < numOfPriorityLevels/2){
+                runNonPreemptiveProcess(process,true);
+                printf("SIMULATOR - CPU 0: FCFS [PID = %d, Priority = %d, InitialBurstTime = %d, RemainingBurstTime = %d]\n",process->iPID,process->iPriority,process->iBurstTime,process->iRemainingBurstTime);  
+            }
+            else{
+                runPreemptiveProcess(process,true);
+                printf("SIMULATOR - CPU 0: RR [PID = %d, Priority = %d, InitialBurstTime = %d, RemainingBurstTime = %d]\n",process->iPID,process->iPriority,process->iBurstTime,process->iRemainingBurstTime);  
+            }
+            
+            if (data == NULL){
+            }
+            else if (process->iState == 4){
+                tSize ++;
+                int a = getDifferenceInMilliSeconds(process->oTimeCreated,process->oFirstTimeRunning);
+                int b = getDifferenceInMilliSeconds(process->oTimeCreated,process->oLastTimeRunning);
+                printf("SIMULATOR - CPU 0 - TERMINATED: [PID = %d, ResponseTime = %d, TurnAroundTime = %d]\n",process->iPID,a,b);
+                printf("QUEUE - ADDED: [Queue = TERMINATED, Size = %d, PID = %d, Priority = %d]\n",tSize,process->iPID,process->iPriority);
+
+                pthread_mutex_lock(&queueMutex);
+                addLast(process, &tList);  //if terminated add to finished list
+                pthread_mutex_unlock(&queueMutex);
+                tPaused = 0;
+                rPaused = 0;
+                maxNumOfProc ++;
+                }
+            else if (process->iState == 3){
+                    pthread_mutex_lock(&IOMutex);
+                        addLast(process,&(IOQueues[process->iDeviceID]));
+                    pthread_mutex_unlock(&IOMutex);
+                }
+            else{
+                rSize ++;
+                pthread_mutex_lock(&queueMutex);
+                addLast(process,&(priorityQueues[queueUsed]));  //if ready then add back to the list
+                pthread_mutex_unlock(&queueMutex);
+                queueSize = countSize((priorityQueues[process->iPriority]));
+                printf("QUEUE - ADDED: [Queue = READY %d, Size = %d, PID = %d, Priority = %d]\n",process->iPriority,queueSize,process->iPID,process->iPriority);
+                }  
+            }
+        }
+    }while (gDone != 3 || data != NULL);
+    
+
+    rPaused = 4;
+    printf("SIMULATOR: Finished \n");
+    tPaused = 0;
+    return threadForProcess;
+}
+
+void * processTerm(void * threadForProcess){
+
+    Process * process;
+    void * data = "";
+    long int avgRT = 0;
+    long int avgTT = 0;
+    int count = 0;
+    int times = 0;
+    do{
+        if (tPaused == 0){
+            data = NULL;
+            pthread_mutex_lock(&queueMutex);
+            data = removeFirst(&tList); 
+            pthread_mutex_unlock(&queueMutex);
+            if (data == NULL){
+                tPaused = 1;
+            }
+            else{
+                process = data;  //gets the element at the front of list
+                count ++;
+                tSize --;
+                
+                avgRT += getDifferenceInMilliSeconds(process->oTimeCreated,process->oFirstTimeRunning);
+                avgTT += getDifferenceInMilliSeconds(process->oTimeCreated,process->oLastTimeRunning);
+
+                printf("QUEUE - REMOVED: [Queue = TERMINATED, Size = %d, PID = %d, Priority = %d]\n",tSize,process->iPID,process->iPriority);
+                printf("TERMINATION DAEMON - CLEARED: [#iTerminated = %d, PID = %d, Priority = %d]\n",count,process->iPID,process->iPriority);
+                
+                pthread_mutex_lock(&poolMutex);
+                times += 1;
+                returnPID(process->iPID);
+                //termTable[count-1] = pidTable[process->iPID];
+                if (count < NUMBER_OF_PROCESSES){
+                    if (process!= NULL){
+                    //destroyProcess(pidTable[process->iPID]);
+                    //termTable[count-1] = pidTable[process->iPID];
+                    }
+                }
+                pthread_mutex_unlock(&poolMutex);
+                
+                //termTable[count-1] = process;
+                //printf(" termTable [PID = %d, Priority = %d]\n",process->iPID,process->iPriority);
+                //destroyProcess(process);
+
+            }  
+        }
+    }while (rPaused != 4 || data != NULL);
+    for (int b = 0 ; b < NUMBER_OF_PROCESSES;b++){
+        pthread_mutex_lock(&poolMutex);
+        if (processTable[b]!= NULL){
+            process = processTable[b];
+            printf(" pidTable [PID = %d, Priority = %d %d]\n",process->iPID,process->iPriority,b);
+            destroyProcess(processTable[b]);
+            }
+        pthread_mutex_unlock(&poolMutex);
+    }
+    printf("\n");
+    /*for (int c = 0 ; c < NUMBER_OF_PROCESSES;c++){
+        pthread_mutex_lock(&poolMutex);
+        if (termTable[c]!=NULL){
+            process = termTable[c];
+            printf(" termTable [PID = %d, Priority = %d %d]\n",process->iPID,process->iPriority,c);
+            //destroyProcess(termTable[c]);
+            }
+        pthread_mutex_unlock(&poolMutex);
+    }*/
+
+
+    avgRT = avgRT / (long int)NUMBER_OF_PROCESSES;
+    avgTT = avgTT / (long int)NUMBER_OF_PROCESSES;
+    printf("TERMINATION DAEMON: Finished\nTERMINATION DAEMON: [Average Response Time = %ld, Average Turn Around Time = %ld]\n",avgRT,avgTT);
+    tPaused = 5;
+    return threadForProcess;
+}
+
+

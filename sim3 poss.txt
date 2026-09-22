@@ -1,0 +1,213 @@
+#include <stdio.h>
+#include "/lhome/psyds13/psyds13_coursework/source/coursework.c"
+#include "/lhome/psyds13/psyds13_coursework/source/linkedlist.c"
+#include <pthread.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+
+void * processGen();
+void * processSim();
+void * processTerm();
+
+int numOfProcesses = NUMBER_OF_PROCESSES;  //global variables so that it can be accessed by any thread
+int maxNumOfProc = MAX_CONCURRENT_PROCESSES;
+int rPaused = 0; //to see if the first process is paused
+int tPaused = 1; //to see if the first process is paused
+int sPaused = 1;
+int tSize = 0;
+int rSize = 0;
+int gDone = 0;
+int i = 0;
+LinkedList rList = LINKED_LIST_INITIALIZER ;
+LinkedList tList = LINKED_LIST_INITIALIZER ;
+
+pthread_t processGenerator;
+pthread_t processSimulator;
+pthread_t processTerminator;
+
+
+int main(){
+
+    void * status;
+    pthread_create((&processGenerator),NULL,processGen,NULL);
+    pthread_create((&processSimulator),NULL,processSim,NULL);
+    pthread_create((&processTerminator),NULL,processTerm,NULL);
+    
+    int rc = pthread_join(processSimulator, &status);  //waits till terminator is finished
+    pthread_exit(NULL);
+    return 0;
+    }
+
+
+void * processGen(void * threadForProcess){
+    do{
+        if (rPaused == 0){
+    //has to be less that MAX_PROCESS
+    //has to stop when NUMB PROCESS
+    //has to call processSim once?
+    //needs r list,  num of started processes
+    //returns no of started processes?
+    //says finished only when num pro start = num of processes
+       
+        Process * process;
+        numOfProcesses --;
+            if (maxNumOfProc >> 0){
+                maxNumOfProc --;
+                process = generateProcess(i);
+                i ++;
+	            printf("GENERATOR - CREATED: [PID = %d, Priority = %d, InitialBurstTime = %d, RemainingBurstTime = %d]\n"\
+    	        ,process->iPID,process->iPriority,process->iBurstTime,process->iRemainingBurstTime);		//prints out details
+                fflush(stdout);
+                addLast(process, &rList);
+                if(process->iState !=1)
+                {
+                    printf("invalid Process");
+                }
+                printf("QUEUE - ADDED: [Queue = READY, Size = %d, PID = %d, Priority = %d]\n",rSize,process->iPID,process->iPriority);
+                printf("GENERATOR - ADMITTED: [PID = %d, Priority = %d, InitialBurstTime = %d, RemainingBurstTime = %d]\n"\
+                ,process->iPID,process->iPriority,process->iBurstTime,process->iRemainingBurstTime);
+                fflush(stdout);
+                rSize ++;
+            }
+            else 
+            {   
+                rPaused = 1;
+                //printf(" being paused\n");
+                sPaused = 0;
+                //printf("Unpausing\n\n");
+                fflush(stdout);
+            }
+
+        }
+    
+    
+    }while (numOfProcesses >= 0 || i < 10);
+    printf("GENERATOR FINISHED\n");
+    gDone = 3;
+    fflush(stdout);
+    return threadForProcess;
+}
+
+
+
+
+
+
+void * processSim(void * threadForProcess){
+
+    //needs both linked list for queues
+    //needs possible mutex so only one can enter queue at a time
+    // wakes up processGen when removes one?
+    
+    Process * process;
+    void * data;
+    int repeat = 0;
+    do{
+    if (sPaused == 0){
+        data = removeFirst(&rList); //gets the element at the front of list
+        //printf("Yes\n\n");
+        if (data == NULL){
+            sPaused = 1;
+            //printf("Stops Rpaused  = %d should be 3 and data should be null : %p\n", rPaused, data);
+            //printf("SIMULATOR: Finished \n");
+            //fflush(stdout);
+            rPaused = 4;
+        }
+        else{  
+            process = data; //gets the data from the element
+            rSize --;
+            printf("QUEUE - Removed: [Queue = READY, Size = %d, PID = %d, Priority = %d]\n",rSize,process->iPID,process->iPriority);
+            runPreemptiveProcess(process,false);
+            printf("SIMULATOR - CPU 0: RR [PID = %d, Priority = %d, InitialBurstTime = %d, RemainingBurstTime = %d]\n"\
+		    ,process->iPID,process->iPriority,process->iBurstTime,process->iRemainingBurstTime);  
+        
+        if (data == NULL){
+            repeat = 1;
+        }
+        else if (process->iState == 4){
+            tSize ++;
+            int a = getDifferenceInMilliSeconds(process->oTimeCreated,process->oFirstTimeRunning);
+            int b = getDifferenceInMilliSeconds(process->oTimeCreated,process->oLastTimeRunning);
+            addLast(process, &tList);  //if terminated add to finished list
+            printf("SIMULATOR - CPU 0 - TERMINATED: [PID = %d, ResponseTime = %d, TurnAroundTime = %d]\n"\
+            ,process->iPID,a,b);
+            printf("QUEUE - ADDED: [Queue = TERMINATED, Size = %d, PID = %d, Priority = %d]\n",tSize,process->iPID,process->iPriority);
+            rPaused = 0;
+            tPaused = 0;
+            maxNumOfProc ++;
+            fflush(stdout);
+        }
+        else{
+            rSize ++;
+            addLast(process,&rList);  //if ready then add back to the list
+            printf("QUEUE - ADDED: [Queue = READY, Size = %d, PID = %d, Priority = %d]\n",rSize,process->iPID,process->iPriority);
+            }  
+    }
+    }
+    }while (gDone != 3 || data != NULL);
+
+    rPaused = 4;
+    printf("SIMULATOR: Finished \n");
+    fflush(stdout);
+    return threadForProcess;
+}
+
+
+void * processTerm(void * threadForProcess){
+
+    //needs amount terminated list tlist
+    //returns amount of terminated lists
+    //says finished only when terminated = num of processes
+
+    Process * process;
+    void * data;
+    double avgRT = 0;
+    double  avgTT = 0;
+    int count = 0;
+    double rt[10] ;
+    double tt[10] ;
+    long int j;
+    do{
+        if (tPaused == 0){
+            data = removeFirst(&tList); 
+            if (data == NULL){
+                tPaused = 1;
+            }
+            else{
+                process = data;  //gets the element at the front of list
+                count ++;
+                tSize --;
+                j = process->iBurstTime - process->iRemainingBurstTime; //calculates if all time was used
+
+                avgRT += getDifferenceInMilliSeconds(process->oTimeCreated,process->oFirstTimeRunning);
+                avgTT += getDifferenceInMilliSeconds(process->oTimeCreated,process->oLastTimeRunning);
+
+                rt[count] = avgRT;
+                tt[count] = avgTT;
+
+                printf("QUEUE - REMOVED: [Queue = TERMINATED, Size = %d, PID = %d, Priority = %d]\n",tSize,process->iPID,process->iPriority);
+                printf("TERMINATION DAEMON - CLEARED: [#iTerminated = %d, PID = %d, Priority = %d]\n"\
+	            ,count,process->iPID,process->iPriority);
+
+                destroyProcess(process);
+            }  
+        }
+    }while (rPaused != 4 || data != NULL);
+    avgRT = avgRT / NUMBER_OF_PROCESSES;
+    avgTT = avgTT / NUMBER_OF_PROCESSES;
+    printf("TERMINATION DAEMON: Finished\nTERMINATION DAEMON: [Average Response Time = %f, Average Turn Around Time = %f]\n",avgRT,avgTT);
+        
+    /*for (count=0; count < 9;count ++){
+        printf("%f ",rt[count]);
+    }
+    printf("\n");
+     for (count=0; count < 9;count ++){
+        printf("%f ",tt[count]);
+    }
+        printf("\n");
+    */
+    //printf("\n\n\n\n");
+    //fflush(stdout);
+    return threadForProcess;
+}
