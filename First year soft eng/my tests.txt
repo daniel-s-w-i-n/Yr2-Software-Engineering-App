@@ -1,0 +1,108 @@
+
+
+
+#### 1.5 - Get method for Transaction Category:
+|Test ID|Test|Inputs|Expected Outcome|Pass/Fail|Notes|
+|----|-----|----|------|----------------|--------|
+| 1.5.1 | Calls transactionCategory() and compares the returned value with an integer | Call the method | Return category as int | 05/05/2023 Passed on initial attempt|
+
+
+#### 1.6 - Get method for Transaction Name:
+|Test ID|Reason|Inputs|Expected Outcome|Pass/Fail|Notes|
+|----|-----|----|------|----------------|----------|
+| 1.6.1 | Ensure the correct attribute value is returned | transactionTime = null | null | Pass | Passed - passed on initial attempt - 03/05/2023 |
+| 1.6.2 | Ensure the correct attribute value is returned | transactionTime = new Date() | Current date returned as a Date object | Pass |Passed - passed on initial attempt - 03/05/2023 |
+
+
+#### 1.7 - Set method for Transaction Name:
+|Test ID|Category|Test|Inputs|Expected Outcome|
+|----|-----|----|------|----------------|
+| 1.7.1 | Valid | Test name can be set | Call the method with new name | Sets transaction name |
+| 1.7.2 | Invalid | Test name is trucated | Call the method with new name, longer than 25 characters | Truncates transaction name to 25 characters |
+| 1.7.3 | Edge | Test name isn't truncated unnecessarily | Call the method with new name; 25 characters long | Does not truncate transaction name |
+| 1.7.4 | Invalid | Test name cannot be set multiple times | Call the method with new name after it has been set | Does not change name, throws exception |
+
+#### 1.8 - Set method for Transaction Value:
+|Test ID|Test|Inputs|Expected Outcome|Pass/Fail|Notes|
+|----|----------|-----|------|----|----------|
+| 1.8.1 | A valid transaction value can be set | Pass a positive BigDecimal into the method | transactionValue shares the same value as the argument passed into the method | Pass | Passed - Passed on the first attempt | 
+| 1.8.2 | A transaction value cannot be set multiple times | Pass a positive BigDecimal into the method, twice  | transactionValue does not change the value with the second call | Fail | Failed - transactionValue changed value on second call<br>Passed - added condition to the method to check that the transaction value is null before setting
+| 1.8.3 | A transaction value cannot be set to a negative value | Pass a negative BigDecimal into the method | Does not set transactionValue, transactionValue is null | Pass | Passed - Passed on the first attempt |
+| 1.8.4 | A transaction value cannot be set to a small, fractional value  | Pass a BigDecimal value of 0.01 into the method | Sets transactionValue successfully | Pass | Passed - Passed on the first attempt |
+
+#### 1.9 - Set method for Category:
+|Test ID|Category|Test|Inputs|Expected Outcome|
+|----|-----|----|------|----------------|
+| 1.9.1 | Valid | Test category can be set | Call the method with a valid category value | Sets category |
+| 1.9.2 | Valid | Test category cannot be set to too large | Call the method with a category value above the max integer value | Does not set the category, throws exception |
+
+#### 1.10 - isComplete:
+|Test ID|Test|Inputs|Expected Outcome|Pass/Fail|Notes|
+|----|-----|----|------|----------------|
+| 1.10.1 | Test before setting Name and Value | Call the method before Name and Value are set | returns both can be set | pass |05/05/2023 initially passed|
+| 1.10.2 | Test after setting Name and Value | Call the method after Name and Value are set | returns neither can be set |  pass |05/05/2023 initially passed|
+| 1.10.3 | Test after setting only one attribute | Call the method after setting only one of Name and Value | returns only one can be set | pass |05/05/2023 initially passed|
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### 1.5 - Get method for Transaction Category:
+|Test ID|Category|Test|Inputs|Expected Outcome|
+|----|-----|----|------|----------------|
+| 1.5.1 | Valid | Test returns category | Call the method | Return category as int |
+
+
+#### 1.10 - isComplete:
+|Test ID|Category|Test|Inputs|Expected Outcome|
+|----|-----|----|------|----------------|
+| 1.10.1 | Valid | Test before setting Name and Value | Call the method before Name and Value are set | returns both can be set |
+| 1.10.2 | Valid | Test after setting Name and Value | Call the method after Name and Value are set | returns neither can be set |
+| 1.10.3 | Edge | Test after setting only one attribute | Call the method after setting only one of Name and Value | returns only one can be set |
+
+#### 2.4 - Get Category Budget:
+|Test ID|Category|Test|Inputs|Expected Outcome|
+|----|-----|----|------|----------------|
+| 2.4.1 | Valid | Test return value | A BigDecimal Object should be returned |
+| 2.4.2 | Valid | Test Changed return value | After set method called see if value has changed |
+
+#### 2.9 - Remove Expense function:
+|Test ID|Category|Test|Inputs|Expected Outcome|
+|----|-----|----|------|----------------|
+| 2.9.1 | Valid | Test valid input | A Positive BigDecimal Object | Spend should be less than it was |
+| 2.9.2 | Invalid | Test negative BigDecimal | A Negative BigDecimal Object <=0 | An error should be thrown |
+| 2.9.3 | Invalid | Test massive BigDecimal | A BigDecimal greater than max_value | An error should be thrown |
+| 2.9.4 | Invalid | Test Minimum BigDecimal | A BigDecimal less than min_value | An error should be thrown |
+| 2.9.5 | Invalid | Test for valid amount of money in £ | A valid BigDecimal Object with an invalid money stored | An error should be thrown |
+
+
+#### 3.2 - List Transactions:
+|Test ID|Category|Test|Inputs|Expected Outcome|
+|----|-----|----|------|----------------|
+| 3.2.1 | Valid | Test valid behaviour | Trigger option from main | lists transactions correctly |
+
+
+#### 3.7 - Add Category Function:
+|Test ID|Category|Test|Inputs|Expected Outcome|
+|----|-----|----|------|----------------|
+| 3.7.1 | Valid | Test adding valid category | Create with valid name and budget | Creates a category with a name, budget and id; displays confirmation to user |
+| 3.7.2 | Invalid | Test with invalid inputs | Create with invalid name or budget | Displays error to user (ask again?) |
